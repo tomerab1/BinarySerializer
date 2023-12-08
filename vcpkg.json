@@ -1,0 +1,9 @@
+{
+  "name" : "binser",
+  "version-string" : "1.0.0",
+  "builtin-baseline" : "f740d6f22908ccd8a519228a26b267f7a68dda9c",
+  "dependencies" : [ {
+    "name" : "gtest",
+    "version>=" : "1.14.0"
+  } ]
+}
