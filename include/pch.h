@@ -17,5 +17,6 @@
 #include <stack>
 #include <deque>
 #include <cassert>
+#include <type_traits>
 
 #endif

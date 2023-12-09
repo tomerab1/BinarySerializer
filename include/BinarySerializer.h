@@ -5,8 +5,39 @@
 
 namespace binser {
     namespace polices {
+        struct StaticStoragePolicy;
+        struct DynamicStoragePolicy;
+
+        namespace traits {
+            template<typename T>
+            struct is_dynamic_v : std::false_type {
+            };
+
+            template<>
+            struct is_dynamic_v<DynamicStoragePolicy> : std::true_type {
+            };
+
+            template<typename T>
+            struct is_static_v : std::false_type {
+            };
+
+            template<>
+            struct is_static_v<StaticStoragePolicy> : std::true_type {
+            };
+        }
+
         template<typename Derived>
         struct IStorage {
+            IStorage() {
+                if constexpr (traits::is_static_v<Derived>::value) {
+                    bytes.staticStorage = {};
+                    control.staticControlBlock = {0, 0};
+                } else {
+                    control.dynamicControlBlock = {0, 4};
+                    bytes.dynamicStorage = new char[control.dynamicControlBlock.logSz];
+                }
+            }
+
             template<typename T>
             void read(const T &elem) {
                 (static_cast<Derived *>(this))->readImpl((char *) &elem, sizeof(T));
@@ -17,30 +48,50 @@ namespace binser {
                 (static_cast<Derived *>(this))->writeImpl((char *) &out, sizeof(T));
             }
 
-            std::size_t writeIdx{0};
-            std::size_t readIdx{0};
 
-            std::array<char, 1024> bytes{};
+            union ControlBlock {
+                struct StaticControlBlock {
+                    std::size_t writeIdx;
+                    std::size_t readIdx;
+                } staticControlBlock;
+
+                struct DynamicControlBlock {
+                    std::size_t phySz;
+                    std::size_t logSz;
+                } dynamicControlBlock;
+            };
+
+            union Storage {
+                std::array<char, 1024> staticStorage;
+                char *dynamicStorage;
+            };
+
+            ControlBlock control;
+            Storage bytes;
         };
 
-        template<std::size_t SZ>
-        struct StaticStoragePolicy : IStorage<StaticStoragePolicy<SZ>> {
-            using storage_type = IStorage<StaticStoragePolicy<SZ>>;
+        struct StaticStoragePolicy : IStorage<StaticStoragePolicy> {
+            using storage_type = IStorage<StaticStoragePolicy>;
 
             void readImpl(char *elem, std::size_t sz) {
-                assert(storage_type::readIdx + sz <= SZ && "Buffer overflow !");
+                assert(storage_type::control.staticControlBlock.readIdx + sz <=
+                       storage_type::bytes.staticStorage.size() && "Buffer overflow !");
 
-                if (storage_type::readIdx + sz > SZ) {
+                if (storage_type::control.staticControlBlock.readIdx + sz >= storage_type::bytes.staticStorage.size()) {
                     return;
                 }
 
-                std::memcpy(elem, storage_type::bytes.data() + storage_type::readIdx, sz);
-                storage_type::readIdx += sz;
+                std::memcpy(elem,
+                            storage_type::bytes.staticStorage.data() + storage_type::control.staticControlBlock.readIdx,
+                            sz);
+                storage_type::control.staticControlBlock.readIdx += sz;
             }
 
             void writeImpl(const char *out, std::size_t sz) {
-                std::memcpy(storage_type::bytes.data() + storage_type::writeIdx, out, sz);
-                storage_type::writeIdx += sz;
+                std::memcpy(
+                        storage_type::bytes.staticStorage.data() + storage_type::control.staticControlBlock.writeIdx,
+                        out, sz);
+                storage_type::control.staticControlBlock.writeIdx += sz;
             }
         };
 
@@ -66,6 +117,7 @@ namespace binser {
                 return reinterpret_cast<char *>(ret);
             }
         };
+
     }
 
     template<typename StoragePolicy>

@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include <BinarySerializer.h>
 
-using StaticBinarySerializer = binser::Serializer<binser::polices::StaticStoragePolicy<1024>>;
+using StaticBinarySerializer = binser::Serializer<binser::polices::StaticStoragePolicy>;
 
 TEST(TestBinSer, INT_OK) {
     StaticBinarySerializer ser{};
@@ -164,7 +164,7 @@ TEST(TestBinSer, BOOL_OK) {
 
 TEST(TestBinSer, ENUM_OK) {
     enum class Color { RED, GREEN, BLUE };
-    binser::Serializer<binser::polices::StaticStoragePolicy<1024>> ser{};
+    StaticBinarySerializer ser{};
 
     Color color = Color::GREEN;
     Color outColor;
@@ -176,7 +176,7 @@ TEST(TestBinSer, ENUM_OK) {
 }
 
 TEST(TestBinSer, POINTER_OK) {
-    binser::Serializer<binser::polices::StaticStoragePolicy<1024>> ser{};
+    StaticBinarySerializer ser{};
     int* ptr = new int(42);
     int* outPtr = new int;
 
@@ -190,7 +190,7 @@ TEST(TestBinSer, POINTER_OK) {
 }
 
 TEST(TestBinSer, STRING_OK) {
-    binser::Serializer<binser::polices::StaticStoragePolicy<1024>> ser{};
+    StaticBinarySerializer ser{};
     std::string str = "Hello, Binary Serialization!";
     std::string outStr;
 
@@ -204,12 +204,12 @@ struct Person {
     std::string name;
     int age{};
 
-    static void serialize(binser::Serializer<binser::polices::StaticStoragePolicy<1024>>& ser, const Person& person) {
+    static void serialize(StaticBinarySerializer& ser, const Person& person) {
         ser.write(person.name);
         ser.write(person.age);
     }
 
-    static Person deserialize(binser::Serializer<binser::polices::StaticStoragePolicy<1024>>& ser) {
+    static Person deserialize(StaticBinarySerializer& ser) {
         Person res;
 
         ser.read(res.name);
@@ -221,7 +221,7 @@ struct Person {
 };
 
 TEST(TestBinSer, STRUCT_OK) {
-    binser::Serializer<binser::polices::StaticStoragePolicy<1024>> ser{};
+    StaticBinarySerializer ser{};
     Person person = { "John Doe", 25 };
 
     Person::serialize(ser, person);
