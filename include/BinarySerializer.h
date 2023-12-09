@@ -33,7 +33,7 @@ namespace binser {
                     bytes.staticStorage = {};
                     control.staticControlBlock = {0, 0};
                 } else {
-                    control.dynamicControlBlock = {0, 4};
+                    control.dynamicControlBlock = {0, 4, 0};
                     bytes.dynamicStorage = new char[control.dynamicControlBlock.logSz];
                 }
             }
@@ -64,6 +64,7 @@ namespace binser {
                 struct DynamicControlBlock {
                     std::size_t phySz;
                     std::size_t logSz;
+                    std::size_t readIdx;
                 } dynamicControlBlock;
             };
 
@@ -101,29 +102,35 @@ namespace binser {
             }
         };
 
-        struct DynamicStoragePolicy {
-        private:
-            static char *malloc(std::size_t sz) {
-                void *ret = std::malloc(sz);
+        struct DynamicStoragePolicy : IStorage<DynamicStoragePolicy> {
+            using storage_type = IStorage<DynamicStoragePolicy>;
 
-                if (!ret) {
-                    exit(EXIT_FAILURE);
-                }
-
-                return reinterpret_cast<char *>(ret);
+            void readImpl(char *elem, std::size_t sz) {
+                std::memcpy(elem,
+                            storage_type::bytes.dynamicStorage + storage_type::control.dynamicControlBlock.readIdx,
+                            sz);
+                storage_type::control.dynamicControlBlock.readIdx =
+                        (storage_type::control.dynamicControlBlock.readIdx + sz) %
+                        storage_type::control.dynamicControlBlock.logSz;
             }
 
-            static char *realloc(void *ptr, std::size_t newSz) {
-                void *ret = std::realloc(ptr, newSz);
-
-                if (!ret) {
-                    exit(EXIT_FAILURE);
+            void writeImpl(const char *out, std::size_t sz) {
+                if (storage_type::control.dynamicControlBlock.phySz + sz >=
+                    storage_type::control.dynamicControlBlock.logSz
+                        ) {
+                    storage_type::control.dynamicControlBlock.logSz *= 2;
+                    auto* oldBytes = storage_type::bytes.dynamicStorage;
+                    storage_type::bytes.dynamicStorage = new char[storage_type::control.dynamicControlBlock.logSz];
+                    std::memmove(storage_type::bytes.dynamicStorage, oldBytes, storage_type::control.dynamicControlBlock.phySz);
+                    delete[] oldBytes;
                 }
 
-                return reinterpret_cast<char *>(ret);
+                std::memcpy(
+                        storage_type::bytes.dynamicStorage + storage_type::control.dynamicControlBlock.phySz,
+                        out, sz);
+                storage_type::control.dynamicControlBlock.phySz += sz;
             }
         };
-
     }
 
     template<typename StoragePolicy>
@@ -402,6 +409,9 @@ namespace binser {
             }
         }
     };
+
+    using StaticBinSer = binser::Serializer<binser::polices::StaticStoragePolicy>;
+    using DynamicBinSer = binser::Serializer<binser::polices::DynamicStoragePolicy>;
 }
 
 #endif
