@@ -119,9 +119,10 @@ namespace binser {
                     storage_type::control.dynamicControlBlock.logSz
                         ) {
                     storage_type::control.dynamicControlBlock.logSz *= 2;
-                    auto* oldBytes = storage_type::bytes.dynamicStorage;
+                    auto *oldBytes = storage_type::bytes.dynamicStorage;
                     storage_type::bytes.dynamicStorage = new char[storage_type::control.dynamicControlBlock.logSz];
-                    std::memmove(storage_type::bytes.dynamicStorage, oldBytes, storage_type::control.dynamicControlBlock.phySz);
+                    std::memcpy(storage_type::bytes.dynamicStorage, oldBytes,
+                                storage_type::control.dynamicControlBlock.phySz);
                     delete[] oldBytes;
                 }
 
@@ -135,6 +136,8 @@ namespace binser {
 
     template<typename StoragePolicy>
     class Serializer : public polices::IStorage<StoragePolicy> {
+        using map_type = std::unordered_map<std::type_index, std::function<void(void *)>>;
+
     public:
         template<typename T>
         void write(const T &elem) {
@@ -142,7 +145,7 @@ namespace binser {
         }
 
         template<typename T>
-        void read(T &out) {
+        void read(T &&out) {
             polices::IStorage<StoragePolicy>::read(out);
         }
 
@@ -180,6 +183,20 @@ namespace binser {
                 char c;
                 read(c);
                 out.push_back(c);
+            }
+        }
+
+        template<typename T>
+        void write(T* ptr, std::size_t sz) {
+            for (std::size_t i = 0; i < sz; i++) {
+                write(*(ptr + i));
+            }
+        }
+
+        template<typename T>
+        void read(T* out, std::size_t sz) {
+            for (std::size_t i = 0; i < sz; i++) {
+                read(*(out + i));
             }
         }
 
@@ -408,6 +425,38 @@ namespace binser {
                 deque.push_front(std::move(tmp));
             }
         }
+
+        void defineTemplateRead(const std::type_index &info, const std::function<void(void *)> &func) {
+            if (m_serializationTemplate.find(info) == m_serializationTemplate.end()) {
+                m_serializationTemplate[info] = func;
+            }
+        }
+
+        void defineTemplateWrite(const std::type_index &info, const std::function<void(void *)> &func) {
+            if (m_deserializationTemplate.find(info) == m_deserializationTemplate.end()) {
+                m_deserializationTemplate[info] = func;
+            }
+        }
+
+        template<typename T>
+        void readRegObject(T &elem) {
+            auto obj = m_serializationTemplate.find(typeid(T));
+            if (obj != m_serializationTemplate.end()) {
+                obj->second((void *) &elem);
+            }
+        }
+
+        template<typename T>
+        void writeRegObject(T &elem) {
+            auto obj = m_deserializationTemplate.find(typeid(T));
+            if (obj != m_deserializationTemplate.end()) {
+                obj->second((void *) &elem);
+            }
+        }
+
+    private:
+        map_type m_serializationTemplate;
+        map_type m_deserializationTemplate;
     };
 
     using StaticBinSer = binser::Serializer<binser::polices::StaticStoragePolicy>;

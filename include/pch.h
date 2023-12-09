@@ -18,5 +18,6 @@
 #include <deque>
 #include <cassert>
 #include <type_traits>
+#include <typeindex>
 
 #endif

@@ -234,34 +234,60 @@ TEST(TestBinSer, DYNAMIC_STORAGE_DOUBLE_MIN_OK) {
 
 TEST(TestBinSer, STATIC_STORAGE_ARRAY_OK) {
     binser::StaticBinSer ser{};
-    int arr[] = { 1, 2, 3, 4, 5, 6, -10, -9, -8, -7 };
-    int outArr[sizeof(arr)/sizeof(int)];
+    int arr[] = {1, 2, 3, 4, 5, 6, -10, -9, -8, -7};
+    int outArr[sizeof(arr) / sizeof(int)];
 
     ser.write(arr);
     ser.read(outArr);
 
-    for (int i = 0; i < (sizeof(arr)/sizeof(int)); i++) {
+    for (int i = 0; i < (sizeof(arr) / sizeof(int)); i++) {
         EXPECT_EQ(arr[i], outArr[i]);
     }
 }
 
 TEST(TestBinSer, DYNAMIC_STORAGE_ARRAY_OK) {
     binser::DynamicBinSer ser{};
-    int arr[] = { 1, 2, 3, 4, 5, 6, -10, -9, -8, -7 };
-    int outArr[sizeof(arr)/sizeof(int)];
+    int arr[] = {1, 2, 3, 4, 5, 6, -10, -9, -8, -7};
+    int outArr[sizeof(arr) / sizeof(int)];
 
     ser.write(arr);
     ser.read(outArr);
 
-    for (int i = 0; i < (sizeof(arr)/sizeof(int)); i++) {
+    for (int i = 0; i < (sizeof(arr) / sizeof(int)); i++) {
         EXPECT_EQ(arr[i], outArr[i]);
     }
 }
 
+TEST(TestBinSer, DYNAMIC_STORAGE_ARRAY_BIG_OK) {
+    binser::DynamicBinSer ser{};
+    std::size_t size = 1'000'000;
+    int* arr = new int[size];
+
+    for (int i = 0 ; i < size; i++) {
+        arr[i] = i;
+    }
+
+    ser.write(size);
+    ser.write(arr, size);
+
+    std::size_t outSz;
+    ser.read(outSz);
+
+    int* outArr = new int[outSz];
+    ser.read(outArr, outSz);
+
+    for (int i = 0; i < size; i++) {
+        EXPECT_EQ(arr[i], outArr[i]);
+    }
+
+    delete[] arr;
+    delete[] outArr;
+}
+
 TEST(TestBinSer, STATIC_STORAGE_CHAR_PTR_OK) {
     binser::StaticBinSer ser{};
-    const char* cp = "hello world !!!";
-    char* dcp = (char*)std::malloc(std::strlen(cp) + 1);
+    const char *cp = "hello world !!!";
+    char *dcp = (char *) std::malloc(std::strlen(cp) + 1);
 
     ser.write(cp);
     ser.read(dcp);
@@ -274,8 +300,8 @@ TEST(TestBinSer, STATIC_STORAGE_CHAR_PTR_OK) {
 
 TEST(TestBinSer, DYNAMIC_STORAGE_CHAR_PTR_OK) {
     binser::DynamicBinSer ser{};
-    const char* cp = "hello world !!!";
-    char* dcp = (char*)std::malloc(std::strlen(cp) + 1);
+    const char *cp = "hello world !!!";
+    char *dcp = (char *) std::malloc(std::strlen(cp) + 1);
 
     ser.write(cp);
     ser.read(dcp);
@@ -309,7 +335,9 @@ TEST(TestBinSer, DYNAMIC_STORAGE_BOOL_OK) {
 }
 
 TEST(TestBinSer, STATIC_STORAGE_ENUM_OK) {
-    enum class Color { RED, GREEN, BLUE };
+    enum class Color {
+        RED, GREEN, BLUE
+    };
     binser::StaticBinSer ser{};
 
     Color color = Color::GREEN;
@@ -322,7 +350,9 @@ TEST(TestBinSer, STATIC_STORAGE_ENUM_OK) {
 }
 
 TEST(TestBinSer, DYNAMIC_STORAGE_ENUM_OK) {
-    enum class Color { RED, GREEN, BLUE };
+    enum class Color {
+        RED, GREEN, BLUE
+    };
     binser::DynamicBinSer ser{};
 
     Color color = Color::GREEN;
@@ -336,8 +366,8 @@ TEST(TestBinSer, DYNAMIC_STORAGE_ENUM_OK) {
 
 TEST(TestBinSer, STATIC_STORAGE_POINTER_OK) {
     binser::StaticBinSer ser{};
-    int* ptr = new int(42);
-    int* outPtr = new int;
+    int *ptr = new int(42);
+    int *outPtr = new int;
 
     ser.write(*ptr);
     ser.read(*outPtr);
@@ -350,8 +380,8 @@ TEST(TestBinSer, STATIC_STORAGE_POINTER_OK) {
 
 TEST(TestBinSer, DYNAMIC_STORAGE_POINTER_OK) {
     binser::DynamicBinSer ser{};
-    int* ptr = new int(42);
-    int* outPtr = new int;
+    int *ptr = new int(42);
+    int *outPtr = new int;
 
     ser.write(*ptr);
     ser.read(*outPtr);
@@ -389,17 +419,17 @@ struct Person {
     std::string name;
     int age{};
 
-    static void serialize(binser::StaticBinSer& ser, const Person& person) {
+    static void serialize(binser::StaticBinSer &ser, const Person &person) {
         ser.write(person.name);
         ser.write(person.age);
     }
 
-    static void serialize(binser::DynamicBinSer & ser, const Person& person) {
+    static void serialize(binser::DynamicBinSer &ser, const Person &person) {
         ser.write(person.name);
         ser.write(person.age);
     }
 
-    static Person deserialize(binser::StaticBinSer& ser) {
+    static Person deserialize(binser::StaticBinSer &ser) {
         Person res;
 
         ser.read(res.name);
@@ -408,7 +438,7 @@ struct Person {
         return res;
     }
 
-    static Person deserialize(binser::DynamicBinSer & ser) {
+    static Person deserialize(binser::DynamicBinSer &ser) {
         Person res;
 
         ser.read(res.name);
@@ -420,7 +450,7 @@ struct Person {
 
 TEST(TestBinSer, STATIC_STORAGE_STRUCT_OK) {
     binser::StaticBinSer ser{};
-    Person person = { "John Doe", 25 };
+    Person person = {"John Doe", 25};
 
     Person::serialize(ser, person);
     Person outPerson = Person::deserialize(ser);
@@ -431,10 +461,37 @@ TEST(TestBinSer, STATIC_STORAGE_STRUCT_OK) {
 
 TEST(TestBinSer, DYNAMIC_STORAGE_STRUCT_OK) {
     binser::DynamicBinSer ser{};
-    Person person = { "John Doe", 25 };
+    Person person = {"John Doe", 25};
 
     Person::serialize(ser, person);
     Person outPerson = Person::deserialize(ser);
+
+    EXPECT_EQ(person.name, outPerson.name);
+    EXPECT_EQ(person.age, outPerson.age);
+}
+
+TEST(TestBinSer, STATIC_STORAGE_DEFINE_TEMPLATE) {
+    binser::DynamicBinSer ser;
+    Person person = {"John Doe", 25};
+
+    ser.defineTemplateWrite(typeid(Person), [&ser](void* obj) {
+        Person& p = *reinterpret_cast<Person*>(obj);
+
+        ser.write(p.name);
+        ser.write(p.age);
+    });
+
+    ser.defineTemplateRead(typeid(Person), [&ser](void* obj) {
+        Person& p = *reinterpret_cast<Person*>(obj);
+
+        ser.read(p.name);
+        ser.read(p.age);
+    });
+
+    Person outPerson;
+
+    ser.writeRegObject(person);
+    ser.readRegObject(outPerson);
 
     EXPECT_EQ(person.name, outPerson.name);
     EXPECT_EQ(person.age, outPerson.age);

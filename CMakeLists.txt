@@ -12,7 +12,8 @@ target_include_directories(BinSer INTERFACE ${CMAKE_SOURCE_DIR}/include)
 enable_testing()
 
 include_directories(${CMAKE_SOURCE_DIR}/include)
-add_executable(TestBinSer ${CMAKE_SOURCE_DIR}/tests/test_primitives.cpp)
+add_executable(TestBinSer ${CMAKE_SOURCE_DIR}/tests/test_primitives.cpp
+        tests/test_stl.cpp)
 
 find_package(GTest CONFIG REQUIRED)
 target_link_libraries(TestBinSer PRIVATE GTest::gtest GTest::gtest_main)
