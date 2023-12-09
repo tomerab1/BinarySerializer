@@ -7,6 +7,7 @@
 
 #include <string>
 #include <memory>
+#include <array>
 #include <fstream>
 #include <vector>
 #include <unordered_map>

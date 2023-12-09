@@ -1,8 +1,10 @@
 #include <gtest/gtest.h>
 #include <BinarySerializer.h>
 
+using StaticBinarySerializer = binser::Serializer<binser::polices::StaticStoragePolicy<1024>>;
+
 TEST(TestBinSer, INT_OK) {
-    binser::Serializer ser{};
+    StaticBinarySerializer ser{};
     int n = 100;
     int outN;
 
@@ -13,7 +15,7 @@ TEST(TestBinSer, INT_OK) {
 }
 
 TEST(TestBinSer, NEG_INT_OK) {
-    binser::Serializer ser{};
+    StaticBinarySerializer ser{};
     int n = -100;
     int outN;
 
@@ -24,7 +26,7 @@ TEST(TestBinSer, NEG_INT_OK) {
 }
 
 TEST(TestBinSer, UINT_OK) {
-    binser::Serializer ser{};
+    StaticBinarySerializer ser{};
     unsigned n = 100;
     unsigned outN;
 
@@ -35,7 +37,7 @@ TEST(TestBinSer, UINT_OK) {
 }
 
 TEST(TestBinSer, UINT_OVERFLOW_OK) {
-    binser::Serializer ser{};
+    StaticBinarySerializer ser{};
     unsigned n = -1;
     unsigned outN;
 
@@ -46,7 +48,7 @@ TEST(TestBinSer, UINT_OVERFLOW_OK) {
 }
 
 TEST(TestBinSer, CHAR_OK) {
-    binser::Serializer ser{};
+    StaticBinarySerializer ser{};
     char c = 'a';
     char outC;
 
@@ -57,7 +59,7 @@ TEST(TestBinSer, CHAR_OK) {
 }
 
 TEST(TestBinSer, FLOAT_OK) {
-    binser::Serializer ser{};
+    StaticBinarySerializer ser{};
     float f = 10.24f;
     float outF;
 
@@ -68,7 +70,7 @@ TEST(TestBinSer, FLOAT_OK) {
 }
 
 TEST(TestBinSer, FLOAT_MAX_OK) {
-    binser::Serializer ser{};
+    StaticBinarySerializer ser{};
     float f = std::numeric_limits<float>::max();
     float outF;
 
@@ -79,7 +81,7 @@ TEST(TestBinSer, FLOAT_MAX_OK) {
 }
 
 TEST(TestBinSer, FLOAT_MIN_OK) {
-    binser::Serializer ser{};
+    StaticBinarySerializer ser{};
     float f = std::numeric_limits<float>::min();
     float outF;
 
@@ -90,7 +92,7 @@ TEST(TestBinSer, FLOAT_MIN_OK) {
 }
 
 TEST(TestBinSer, DOUBLE_OK) {
-    binser::Serializer ser{};
+    StaticBinarySerializer ser{};
     double d = 1124124124.124124;
     double outD;
 
@@ -101,7 +103,7 @@ TEST(TestBinSer, DOUBLE_OK) {
 }
 
 TEST(TestBinSer, DOUBLE_MAX_OK) {
-    binser::Serializer ser{};
+    StaticBinarySerializer ser{};
     double d = std::numeric_limits<double>::max();
     double outD;
 
@@ -112,7 +114,7 @@ TEST(TestBinSer, DOUBLE_MAX_OK) {
 }
 
 TEST(TestBinSer, DOUBLE_MIN_OK) {
-    binser::Serializer ser{};
+    StaticBinarySerializer ser{};
     double d = std::numeric_limits<double>::min();
     double outD;
 
@@ -123,7 +125,7 @@ TEST(TestBinSer, DOUBLE_MIN_OK) {
 }
 
 TEST(TestBinSer, ARRAY_OK) {
-    binser::Serializer ser{};
+    StaticBinarySerializer ser{};
     int arr[] = { 1, 2, 3, 4, 5, 6, -10, -9, -8, -7 };
     int outArr[sizeof(arr)/sizeof(int)];
 
@@ -136,7 +138,7 @@ TEST(TestBinSer, ARRAY_OK) {
 }
 
 TEST(TestBinSer, CHAR_PTR_OK) {
-    binser::Serializer ser{};
+    StaticBinarySerializer ser{};
     const char* cp = "hello world !!!";
     char* dcp = (char*)std::malloc(std::strlen(cp) + 1);
 
@@ -150,7 +152,7 @@ TEST(TestBinSer, CHAR_PTR_OK) {
 }
 
 TEST(TestBinSer, BOOL_OK) {
-    binser::Serializer ser{};
+    StaticBinarySerializer ser{};
     bool b = true;
     bool outB;
 
@@ -162,7 +164,7 @@ TEST(TestBinSer, BOOL_OK) {
 
 TEST(TestBinSer, ENUM_OK) {
     enum class Color { RED, GREEN, BLUE };
-    binser::Serializer ser{};
+    binser::Serializer<binser::polices::StaticStoragePolicy<1024>> ser{};
 
     Color color = Color::GREEN;
     Color outColor;
@@ -174,7 +176,7 @@ TEST(TestBinSer, ENUM_OK) {
 }
 
 TEST(TestBinSer, POINTER_OK) {
-    binser::Serializer ser{};
+    binser::Serializer<binser::polices::StaticStoragePolicy<1024>> ser{};
     int* ptr = new int(42);
     int* outPtr = new int;
 
@@ -188,7 +190,7 @@ TEST(TestBinSer, POINTER_OK) {
 }
 
 TEST(TestBinSer, STRING_OK) {
-    binser::Serializer ser{};
+    binser::Serializer<binser::polices::StaticStoragePolicy<1024>> ser{};
     std::string str = "Hello, Binary Serialization!";
     std::string outStr;
 
@@ -202,12 +204,12 @@ struct Person {
     std::string name;
     int age{};
 
-    static void serialize(binser::Serializer& ser, const Person& person) {
+    static void serialize(binser::Serializer<binser::polices::StaticStoragePolicy<1024>>& ser, const Person& person) {
         ser.write(person.name);
         ser.write(person.age);
     }
 
-    static Person deserialize(binser::Serializer& ser) {
+    static Person deserialize(binser::Serializer<binser::polices::StaticStoragePolicy<1024>>& ser) {
         Person res;
 
         ser.read(res.name);
@@ -219,7 +221,7 @@ struct Person {
 };
 
 TEST(TestBinSer, STRUCT_OK) {
-    binser::Serializer ser{};
+    binser::Serializer<binser::polices::StaticStoragePolicy<1024>> ser{};
     Person person = { "John Doe", 25 };
 
     Person::serialize(ser, person);
