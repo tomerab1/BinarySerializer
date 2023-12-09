@@ -38,6 +38,12 @@ namespace binser {
                 }
             }
 
+            ~IStorage() {
+                if constexpr (traits::is_dynamic_v<Derived>::value) {
+                    delete[] bytes.dynamicStorage;
+                }
+            }
+
             template<typename T>
             void read(const T &elem) {
                 (static_cast<Derived *>(this))->readImpl((char *) &elem, sizeof(T));
