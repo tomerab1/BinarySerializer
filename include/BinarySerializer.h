@@ -189,14 +189,14 @@ namespace binser {
         template<typename T>
         void write(T* ptr, std::size_t sz) {
             for (std::size_t i = 0; i < sz; i++) {
-                write(*(ptr + i));
+                write(ptr[i]);
             }
         }
 
         template<typename T>
         void read(T* out, std::size_t sz) {
             for (std::size_t i = 0; i < sz; i++) {
-                read(*(out + i));
+                read(out[i]);
             }
         }
 
